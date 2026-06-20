@@ -1160,7 +1160,7 @@ body {
 <script>
 (function(){
   // 吉祥话
-  var fortunes = ['心有山海，静而不争。', '日拱一卒，功不唐捐。', '星光不问赶路人，时光不负有心人。', '每一天的坚持，都是未来的伏笔。', '不积跬步，无以至千里。', '学而不思则罔，思而不学则殆。', '凡是过去，皆为序章。', '长风破浪会有时，直挂云帆济沧海。', '博观而约取，厚积而薄发。', '路漫漫其修远兮，吾将上下而求索。', '知行合一，止于至善。'];
+  var fortunes = ['心有山海，静而不争', '日拱一卒，功不唐捐', '星光不问赶路人，时光不负有心人', '每一天的坚持，都是未来的伏笔', '不积跬步，无以至千里', '学而不思则罔，思而不学则殆', '凡是过去，皆为序章', '长风破浪会有时，直挂云帆济沧海', '博观而约取，厚积而薄发', '路漫漫其修远兮，吾将上下而求索', '知行合一，止于至善'];
 
   // 总览背景图数组（每次随机选一张）
   var overviewBgs = [
@@ -1169,6 +1169,46 @@ body {
     'url("jimeng-3.jpg")',
     'url("jimeng-4.jpg")'
   ];
+
+  // 刷新总览面板（恢复打卡状态 + 吉祥话 + 背景图）
+  function refreshOverview() {
+    // 1. 恢复背景图（只在还没有背景时随机选，避免每次切换都变）
+    var bgEl = document.getElementById('overviewBg');
+    if(bgEl && !bgEl.style.backgroundImage) {
+      var bgIdx = Math.floor(Math.random() * overviewBgs.length);
+      bgEl.style.backgroundImage = overviewBgs[bgIdx];
+    }
+    // 2. 根据打卡状态恢复吉祥话
+    for(var d = 1; d <= 7; d++) {
+      var btn = document.getElementById('checkinBtn' + d);
+      var titleEl = document.getElementById('fortuneTitle' + d);
+      if(btn && btn.classList.contains('checked') && titleEl) {
+        // 已打卡：显示吉祥话（从 localStorage 读取，没有则随机一条）
+        var saved = localStorage.getItem('gj_fortune_w1_d' + d);
+        if(!saved) {
+          saved = fortunes[Math.floor(Math.random() * fortunes.length)];
+          localStorage.setItem('gj_fortune_w1_d' + d, saved);
+        }
+        titleEl.textContent = saved;
+      } else if(titleEl) {
+        titleEl.textContent = '今日上上签';
+      }
+    }
+    // 3. 刷新总览打卡小圆点
+    for(var d2 = 1; d2 <= 7; d2++) {
+      var ovd = document.getElementById('ov_day_' + d2);
+      var btn2 = document.getElementById('checkinBtn' + d2);
+      if(ovd && btn2) {
+        if(btn2.classList.contains('checked')) {
+          ovd.classList.add('checked');
+          if(ovd.querySelector('.ov-icon')) ovd.querySelector('.ov-icon').textContent = '✅';
+          if(ovd.querySelector('.ov-status')) ovd.querySelector('.ov-status').textContent = '已打卡';
+        }
+      }
+    }
+    updateProgress();
+  }
+  window.refreshOverview = refreshOverview;
 
   // 切换视图（v15 修复版）
   function switchView(view) {
@@ -1190,12 +1230,8 @@ body {
 
     // 4. 根据 view 显示对应内容
     if(view === 'overview') {
-      // 随机设置背景图
-      var bgEl = document.getElementById('overviewBg');
-      if(bgEl) {
-        var bgIdx = Math.floor(Math.random() * overviewBgs.length);
-        bgEl.style.backgroundImage = overviewBgs[bgIdx];
-      }
+      // 刷新总览面板（恢复打卡状态 + 吉祥话 + 背景图）
+      refreshOverview();
       ov.style.display = 'block';
       setTimeout(function(){ ov.classList.add('active'); }, 10);
       tabs[0].classList.add('active');
@@ -1229,18 +1265,26 @@ body {
       btn.style.background = '';
       btn.style.borderColor = '';
       if(dateEl) dateEl.textContent = '';
-      if(titleEl) titleEl.textContent = '今日上上签';
+      if(titleEl) {
+        titleEl.textContent = '今日上上签';
+        localStorage.removeItem('gj_fortune_w1_d' + day);
+        localStorage.removeItem('gj_checkin_time_w1_d' + day);
+      }
     } else {
       // 未打卡 → 打卡成功
       btn.classList.add('checked');
       btn.innerHTML = '✓ 今日上上签';
       var now = new Date();
       if(dateEl) {
-        dateEl.textContent = '打卡时间：' + (now.getMonth()+1) + '月' + now.getDate() + '日 ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+        var timeStr = (now.getMonth()+1) + '月' + now.getDate() + '日 ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2,'0');
+        dateEl.textContent = '打卡时间：' + timeStr;
+        localStorage.setItem('gj_checkin_time_w1_d' + day, timeStr);
       }
       if(titleEl) {
         var fi = Math.floor(Math.random() * fortunes.length);
         titleEl.textContent = fortunes[fi];
+        // 保存吉祥话到 localStorage（切换总览时恢复）
+        localStorage.setItem('gj_fortune_w1_d' + day, fortunes[fi]);
       }
       launchConfetti();
     }
@@ -1248,6 +1292,42 @@ body {
     saveCheckinsToLocal();
   }
   window.doCheckin = doCheckin;
+
+  // 从 localStorage 恢复打卡状态
+  function loadCheckinsFromLocal() {
+    var arrStr = localStorage.getItem('gj_checkin_w1');
+    if(!arrStr) return;
+    try {
+      var arr = JSON.parse(arrStr);
+      for(var d = 1; d <= 7; d++) {
+        var btn = document.getElementById('checkinBtn' + d);
+        var dateEl = document.getElementById('checkinDate' + d) || document.getElementById('date' + d);
+        var titleEl = document.getElementById('fortuneTitle' + d);
+        if(arr[d-1]) {
+          if(btn) {
+            btn.classList.add('checked');
+            btn.innerHTML = '✓ 今日上上签';
+            btn.style.background = 'linear-gradient(135deg, #0071e3, #5856d6)';
+            btn.style.borderColor = 'transparent';
+          }
+          if(dateEl) {
+            var saved = localStorage.getItem('gj_checkin_time_w1_d' + d);
+            if(saved) dateEl.textContent = saved;
+          }
+          // 吉祥话：从 localStorage 恢复，没有则随机一条
+          if(titleEl) {
+            var savedF = localStorage.getItem('gj_fortune_w1_d' + d);
+            if(!savedF) {
+              savedF = fortunes[Math.floor(Math.random() * fortunes.length)];
+              localStorage.setItem('gj_fortune_w1_d' + d, savedF);
+            }
+            titleEl.textContent = savedF;
+          }
+        }
+      }
+    } catch(e) {}
+  }
+  window.loadCheckinsFromLocal = loadCheckinsFromLocal;
 
   // 保存打卡数据到 localStorage（供目录页读取）
   function saveCheckinsToLocal() {
@@ -1364,12 +1444,11 @@ body {
   }
   window.showGreatPopup = showGreat;
 
-  // 页面加载时初始化总览背景图（随机选一张）
-  (function initBg(){
-    var be = document.getElementById('overviewBg');
-    if(be) {
-      be.style.backgroundImage = overviewBgs[Math.floor(Math.random() * overviewBgs.length)];
-    }
+  // 页面加载时初始化：恢复打卡状态 + 背景图 + 吉祥话
+  (function init(){
+    loadCheckinsFromLocal();
+    refreshOverview();
+    updateProgress();
   })();
 
 })();</script>

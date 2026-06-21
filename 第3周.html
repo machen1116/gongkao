@@ -1044,26 +1044,41 @@ body {
     'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
   ];
 
-  // 切换视图（修复版）
+  // 切换视图（v15 修复版——与第1周完全一致）
   function switchView(view) {
+    // 1. 隐藏所有日期内容
+    var sections = document.querySelectorAll('.day-section');
+    sections.forEach(function(s){
+      s.classList.remove('active');
+      s.style.display = 'none';
+    });
+
+    // 2. 隐藏总览面板
     var ov = document.getElementById('overviewPanel');
+    ov.classList.remove('active');
+    ov.style.display = 'none';
+
+    // 3. 清除所有标签的 active 状态
     var tabs = document.querySelectorAll('.day-tab');
     tabs.forEach(function(t){ t.classList.remove('active'); });
+
+    // 4. 根据 view 显示对应内容
     if(view === 'overview') {
+      // 刷新总览面板（恢复打卡状态 + 吉祥话 + 背景）
       refreshOverview();
       ov.style.display = 'block';
       setTimeout(function(){ ov.classList.add('active'); }, 10);
       tabs[0].classList.add('active');
     } else {
-      ov.classList.remove('active');
-      setTimeout(function(){ ov.style.display = 'none'; }, 360);
-      var target = document.getElementById('day' + view);
-      if(target) {
-        target.style.display = 'block';
-        setTimeout(function(){ target.classList.add('active'); }, 10);
-        tabs[view].classList.add('active');
+      var dayEl = document.getElementById('day' + view);
+      if(dayEl) {
+        dayEl.style.display = 'block';
+        setTimeout(function(){ dayEl.classList.add('active'); }, 10);
       }
+      // tabs[0]=总, tabs[1]=一, tabs[2]=二, ...
+      if(tabs[view]) tabs[view].classList.add('active');
     }
+    window.scrollTo({top:0, behavior:'smooth'});
   }
   window.switchView = switchView;
 

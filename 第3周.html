@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>第3周 · 新思想+公文 · 公基背多分</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body { font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif; background:#f5f5f7; color:#1d1d1f; }
+
+  /* ===== 顶部导航 ===== */
+  .topbar { position:sticky; top:0; z-index:100; display:flex; align-items:center; padding:12px 16px; background:rgba(255,255,255,0.92); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-bottom:1px solid rgba(0,0,0,0.06); }
+  .back-btn { width:32px; height:32px; border-radius:50%; background:#f5f5f7; display:flex; align-items:center; justify-content:center; font-size:18px; color:#1d1d1f; text-decoration:none; margin-right:12px; }
+  .topbar-title { font-size:17px; font-weight:600; }
+
+  /* ===== 周次标题 ===== */
+  .week-header { padding:24px 16px 12px; }
+  .week-title { font-size:22px; font-weight:700; }
+  .week-subtitle { font-size:13px; color:#86868b; margin-top:4px; }
+
+  /* ===== 标签页 ===== */
+  .tabs { display:flex; padding:0 16px; gap:6px; margin-bottom:8px; }
+  .day-tab { flex:1; text-align:center; padding:10px 0; border-radius:10px; font-size:14px; font-weight:500; color:#86868b; background:#fff; cursor:pointer; transition:.2s; }
+  .day-tab.active { background:#0071e3; color:#fff; }
+
+  /* ===== 内容区 ===== */
+  .content { padding:0 16px 40px; }
+
+  /* ===== 总览面板 ===== */
+  .overview-panel { display:none; position:relative; overflow:hidden; min-height:360px; border-radius:16px; margin-top:8px; }
+  .overview-panel.active { display:block; animation:fadeInUp .38s cubic-bezier(.22,1,.36,1) both; }
+  .overview-panel-bg { position:absolute; top:0; left:0; width:100%; height:100%; border-radius:16px; transition:background .6s ease; }
+  .overview-panel-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.72); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); border-radius:16px; }
+  .overview-panel-content { position:relative; z-index:2; padding:24px 20px; }
+  .overview-panel-content h2 { font-size:18px; font-weight:700; margin-bottom:16px; }
+  .overview-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  .overview-day { text-align:center; padding:12px 4px; border-radius:12px; background:rgba(255,255,255,0.82); }
+  .overview-day.checked { background:rgba(0,113,227,0.12); }
+  .ov-icon { font-size:22px; margin-bottom:4px; }
+  .ov-label { font-size:13px; font-weight:600; }
+  .ov-status { font-size:11px; color:#86868b; margin-top:2px; }
+  .ov-status.done { color:#0071e3; font-weight:600; }
+
+  /* ===== 背诵列表 ===== */
+  .sentence-list { list-style:none; }
+  .sentence-list li { background:rgba(255,255,255,0.78); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px); border-left:4px solid #0071e3; border-radius:0 11px 11px 0; padding:13px 16px 13px 18px; margin-bottom:12px; font-size:15px; line-height:1.75; color:#1d1d1f; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+  .sentence-list li strong { color:#0071e3; }
+
+  /* ===== 自测题 ===== */
+  .quiz-section { margin-top:20px; }
+  .quiz-title { font-size:16px; font-weight:700; margin-bottom:12px; }
+  .quiz-item { background:#fff; border-radius:14px; padding:18px 16px; margin-bottom:14px; box-shadow:0 1px 6px rgba(0,0,0,0.06); }
+  .quiz-q { font-size:15px; font-weight:600; margin-bottom:12px; }
+  .quiz-opts { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .quiz-opt { padding:10px 12px; border-radius:10px; border:1.5px solid #e5e5ea; font-size:14px; cursor:pointer; transition:.18s; }
+  .quiz-opt:active { transform:scale(0.97); }
+  .quiz-opt.correct { border-color:#34c759; background:rgba(52,199,89,0.1); }
+  .quiz-opt.wrong { border-color:#ff3b30; background:rgba(255,59,48,0.1); }
+  .quiz-ans { margin-top:10px; font-size:13px; color:#34c759; display:none; }
+  .quiz-ans.show { display:block; animation:fadeIn .3s both; }
+
+  /* ===== 打卡按钮 ===== */
+  .checkin-bar { position:fixed; bottom:0; left:0; right:0; padding:12px 16px; background:rgba(255,255,255,0.95); backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px); border-top:1px solid rgba(0,0,0,0.06); z-index:99; }
+  .checkin-btn { width:100%; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:600; color:#fff; background:linear-gradient(135deg,#0071e3,#409cff); cursor:pointer; }
+  .checkin-btn.checked { background:linear-gradient(135deg,#34c759,#30d158); }
+
+  /* ===== 打卡弹窗 ===== */
+  .checkin-popup { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.35); z-index:200; display:none; align-items:center; justify-content:center; }
+  .checkin-popup.show { display:flex; animation:fadeIn .25s both; }
+  .checkin-card { background:#fff; border-radius:20px; padding:32px 28px; width:85%; max-width:340px; text-align:center; animation:popIn .38s cubic-bezier(.17,.67,.35,1.2) both; }
+  .checkin-card .emoji { font-size:48px; margin-bottom:12px; }
+  .checkin-card .text { font-size:18px; font-weight:700; }
+  .checkin-card .sub { font-size:13px; color:#86868b; margin-top:6px; }
+
+  /* ===== 动画 ===== */
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(18px); } to { opacity:1; transform:translateY(0); } }
+  @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+  @keyframes popIn { from { opacity:0; transform:scale(0.85); } to { opacity:1; transform:scale(1); } }
+
+  /* ===== 判断题特训 ===== */
+  .tf-section { margin-top:20px; }
+  .tf-title { font-size:16px; font-weight:700; margin-bottom:12px; }
+  .tf-item { background:#fff; border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 1px 6px rgba(0,0,0,0.06); }
+  .tf-q { font-size:14px; margin-bottom:10px; }
+  .tf-opts { display:flex; gap:10px; }
+  .tf-opt { flex:1; text-align:center; padding:8px; border-radius:10px; border:1.5px solid #e5e5ea; font-size:14px; cursor:pointer; }
+  .tf-opt.correct { border-color:#34c759; background:rgba(52,199,89,0.1); }
+  .tf-opt.wrong { border-color:#ff3b30; background:rgba(255,59,48,0.1); }
+  .tf-ans { margin-top:8px; font-size:12px; color:#86868b; display:none; }
+  .tf-ans.show { display:block; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="index.html">←</a>
+  <div class="topbar-title">第3周 · 新思想+公文</div>
+</div>
+
+<div class="week-header">
+  <div class="week-title">第3周 · 新思想+公文</div>
+  <div class="week-subtitle">每日10条背诵 + 5道自测 · day7 判断题特训</div>
+</div>
+
+<div class="tabs">
+  <div class="day-tab active" onclick="switchView(0)">总</div>
+  <div class="day-tab" onclick="switchView(1)">一</div>
+  <div class="day-tab" onclick="switchView(2)">二</div>
+  <div class="day-tab" onclick="switchView(3)">三</div>
+  <div class="day-tab" onclick="switchView(4)">四</div>
+  <div class="day-tab" onclick="switchView(5)">五</div>
+  <div class="day-tab" onclick="switchView(6)">六</div>
+  <div class="day-tab" onclick="switchView(7)">日</div>
+</div>
+
+<div class="content">
+
+<!-- 总览面板 -->
+<div class="overview-panel active" id="overviewPanel">
+  <div class="overview-panel-bg" id="overviewBg"></div>
+  <div class="overview-panel-overlay"></div>
+  <div class="overview-panel-content">
+    <h2>📅 本周打卡总览</h2>
+    <div class="overview-grid">
+      <div class="overview-day" id="ov_day_1" onclick="goToDay(1)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">一</div>
+        <div class="ov-status" id="ov_status_1">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_2" onclick="goToDay(2)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">二</div>
+        <div class="ov-status" id="ov_status_2">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_3" onclick="goToDay(3)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">三</div>
+        <div class="ov-status" id="ov_status_3">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_4" onclick="goToDay(4)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">四</div>
+        <div class="ov-status" id="ov_status_4">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_5" onclick="goToDay(5)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">五</div>
+        <div class="ov-status" id="ov_status_5">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_6" onclick="goToDay(6)">
+        <div class="ov-icon">📖</div>
+        <div class="ov-label">六</div>
+        <div class="ov-status" id="ov_status_6">未打卡</div>
+      </div>
+      <div class="overview-day" id="ov_day_7" onclick="goToDay(7)">
+        <div class="ov-icon">📝</div>
+        <div class="ov-label">日</div>
+        <div class="ov-status" id="ov_status_7">未打卡</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- day1：新思想（十个明确） -->
+<div id="dayView1" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **习近平新时代中国特色社会主义思想**是当代中国马克思主义、21世纪马克思主义，是党和国家必须长期坚持的指导思想。</li>
+    <li>· **十个明确**是习近平新时代中国特色社会主义思想的主体内容，构成了这一思想体系的四梁八柱。</li>
+    <li>· **明确中国特色社会主义最本质的特征**是中国共产党领导，中国特色社会主义制度的最大优势是中国共产党领导。</li>
+    <li>· **明确坚持和发展中国特色社会主义总任务**是实现社会主义现代化和中华民族伟大复兴，分两步走在本世纪中叶建成富强民主文明和谐美丽的社会主义现代化强国。</li>
+    <li>· **明确新时代我国社会主要矛盾**是人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾。</li>
+    <li>· **明确中国特色社会主义事业总体布局**是五位一体（经济、政治、文化、社会、生态文明），战略布局是四个全面。</li>
+    <li>· **明确全面深化改革总目标**是完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化。</li>
+    <li>· **明确全面推进依法治国总目标**是建设中国特色社会主义法治体系、建设社会主义法治国家。</li>
+    <li>· **明确必须坚持和完善社会主义基本经济制度**，使市场在资源配置中起决定性作用，更好发挥政府作用。</li>
+    <li>· **明确党在新时代的强军目标**是建设一支听党指挥、能打胜仗、作风优良的人民军队，把人民军队建设成为世界一流军队。</li>
+  </ul>
+  <div class="quiz-section">
+    <div class="quiz-title">📝 每日自测（5题）</div>
+    <div class="quiz-item">
+      <div class="quiz-q">1.（单选）习近平新时代中国特色社会主义思想的核心内容是：</div>
+      <div class="quiz-opts">
+        <div class="quiz-opt" onclick="answerQuiz(this,0)">A. 八个明确、十四个坚持</div>
+        <div class="quiz-opt" onclick="answerQuiz(this,1)">B. 十个明确、十四个坚持</div>
+        <div class="quiz-opt" onclick="answerQuiz(this,2)">C. 十二个明确、十五个坚持</div>
+        <div class="quiz-opt" onclick="answerQuiz(this,3)">D. 九个明确、十三个坚持</div>
+      </div>
+      <div class="quiz-ans" data-ans="1">✅ B。党的十九届六中全会概括习近平新时代中国特色社会主义思想核心内容为"十个明确"和"十四个坚持"。</div>
+    </div>
+  </div>
+</div>
+
+<!-- day2：新思想（新发展理念） -->
+<div id="dayView2" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **新发展理念**是创新、协调、绿色、开放、共享，是习近平经济思想的核心内容。</li>
+    <li>· **创新发展**注重解决发展动力问题，必须把创新摆在国家发展全局的核心位置。</li>
+    <li>· **协调发展**注重解决发展不平衡问题，重点促进城乡区域协调发展。</li>
+    <li>· **绿色发展**注重解决人与自然和谐共生问题，绿水青山就是金山银山。</li>
+    <li>· **开放发展**注重解决发展内外联动问题，推动构建开放型世界经济。</li>
+    <li>· **共享发展**注重解决社会公平正义问题，使发展成果更多更公平惠及全体人民。</li>
+    <li>· **新发展格局**是以国内大循环为主体、国内国际双循环相互促进的新发展格局。</li>
+    <li>· **高质量发展**是全面建设社会主义现代化国家的首要任务，是体现创新、协调、绿色、开放、共享的发展。</li>
+    <li>· **供给侧结构性改革**是经济发展和经济工作的主线，重点是解放和发展社会生产力。</li>
+    <li>· **共同富裕**是社会主义的本质要求，是中国式现代化的重要特征，不是同步富裕、同等富裕。</li>
+  </ul>
+</div>
+
+<!-- day3：公文（概述+格式） -->
+<div id="dayView3" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **公文**是党政机关实施领导、履行职能、处理公务的具有特定效力和规范体式的公务文书。</li>
+    <li>· **公文特点**：作者法定性、法定权威性、效用现实性、体式规范性、处理程序性。</li>
+    <li>· **按行文方向分类**：上行文（请示、报告）、下行文（命令、决定、通知、通报、批复）、平行文（函）。</li>
+    <li>· **保密等级**：秘密（一般秘密）、机密（重要秘密）、绝密（核心秘密）。</li>
+    <li>· **公文格式**包括版头、主体、版记三部分，一般使用A4纸，左侧装订。</li>
+    <li>· **发文字号**由发文机关代字、年份、发文顺序号组成，年份用六角括号括入。</li>
+    <li>· **签发人**是上行文（请示、报告）必须标注的要素，平行文和下行文不需要。</li>
+    <li>· **公文标题**一般由发文机关名称、事由和文种组成，文种不能省略。</li>
+    <li>· **主送机关**是公文的主要受理机关，应当使用机关全称、规范化简称或者同类型机关统称。</li>
+    <li>· **成文日期**署会议通过或者发文机关负责人签发的日期，联合行文署最后签发机关负责人签发的日期。</li>
+  </ul>
+</div>
+
+<!-- day4：公文（15个法定文种） -->
+<div id="dayView4" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **决议**适用于经会议讨论通过的重大决策事项，必须经会议讨论通过，是下行文。</li>
+    <li>· **决定**适用于对重要事项作出决策和部署、奖惩有关单位和人员、变更或者撤销下级机关不适当的决定事项。</li>
+    <li>· **命令（令）**适用于公布行政法规和规章、宣布施行重大强制性措施、批准授予和晋升衔级、嘉奖有关单位和人员。</li>
+    <li>· **公报**适用于公布重要决定或者重大事项，一般用于党和国家的重要会议、重大事件。</li>
+    <li>· **公告**适用于向国内外宣布重要事项或者法定事项，发文机关级别较高。</li>
+    <li>· **通告**适用于在一定范围内公布应当遵守或者周知的事项，面向社会公开。</li>
+    <li>· **意见**适用于对重要问题提出见解和处理办法，可上行、下行、平行，是泛行文。</li>
+    <li>· **通知**适用于发布、传达要求下级机关执行和有关单位周知或者执行的事项，批转、转发公文。</li>
+    <li>· **通报**适用于表彰先进、批评错误、传达重要精神和告知重要情况。</li>
+    <li>· **报告**适用于向上级机关汇报工作、反映情况，回复上级机关的询问，不需上级批复。</li>
+  </ul>
+</div>
+
+<!-- day5：公文（请示+报告+函+纪要） -->
+<div id="dayView5" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **请示**适用于向上级机关请求指示、批准，必须一文一事，一般只写一个主送机关。</li>
+    <li>· **请示与报告的区别**：请示需要上级批复，报告不需要批复；请示事前行文，报告事中或事后行文。</li>
+    <li>· **批复**适用于答复下级机关的请示事项，具有被动性，一请示一批复。</li>
+    <li>· **函**适用于不相隶属机关之间商洽工作、询问和答复问题、请求批准和答复审批事项，是平行文。</li>
+    <li>· **会议纪要**适用于记载会议主要情况和议定事项，不具有正式公文效力，需以通知等形式印发。</li>
+    <li>· **议案**适用于各级人民政府按照法律程序向同级人民代表大会或者人民代表大会常务委员会提请审议事项。</li>
+    <li>· **公文办理**包括收文办理和发文办理，收文办理程序：签收→登记→初审→承办→传阅→催办→答复。</li>
+    <li>· **公文管理**：公文的撤销和废止由发文机关、上级机关或者权力机关根据职权范围和有关法律法规决定。</li>
+    <li>· **涉密公文**应当按照发文机关的要求和有关规定进行清退或者销毁，销毁涉密公文必须履行审批登记手续。</li>
+    <li>· **新《条例》**将公文种类调整为15种（2012年7月1日起施行），新增了"决议"和"公报"，取消了"条例"和"规定"。</li>
+  </ul>
+</div>
+
+<!-- day6：新思想（中国梦+中国式现代化） -->
+<div id="dayView6" style="display:none;">
+  <ul class="sentence-list">
+    <li>· **中国梦**的本质是国家富强、民族振兴、人民幸福，实现途径是走中国道路、弘扬中国精神、凝聚中国力量。</li>
+    <li>· **中国式现代化**是中国共产党领导的社会主义现代化，既有各国现代化的共同特征，更有基于自己国情的中国特色。</li>
+    <li>· **中国式现代化**的五个特征：人口规模巨大、全体人民共同富裕、物质文明和精神文明相协调、人与自然和谐共生、走和平发展道路。</li>
+    <li>· **共同富裕**不是同步富裕、同等富裕，而是分阶段促进共同富裕，允许一部分人先富起来，先富带后富。</li>
+    <li>· **新发展理念**是创新、协调、绿色、开放、共享，是管全局、管根本、管长远的导向。</li>
+    <li>· **构建新发展格局**是立足实现第二个百年奋斗目标、统筹发展和安全作出的重大战略决策。</li>
+    <li>· **全面深化改革**的总目标是完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化。</li>
+    <li>· **全面推进依法治国**的总目标是建设中国特色社会主义法治体系、建设社会主义法治国家。</li>
+    <li>· **全面从严治党**要以党的政治建设为统领，全面推进党的政治建设、思想建设、组织建设、作风建设、纪律建设。</li>
+    <li>· **人类命运共同体**理念是中国特色大国外交的核心理念，推动建设持久和平、普遍安全、共同繁荣、开放包容、清洁美丽的世界。</li>
+  </ul>
+</div>
+
+<!-- day7：30道判断题特训 -->
+<div id="dayView7" style="display:none;">
+  <div class="tf-title">📝 日 · 30道判断题特训</div>
+  <div class="tf-item">
+    <div class="tf-q">1. 习近平新时代中国特色社会主义思想是党和国家必须长期坚持的指导思想。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。党的十九大将习近平新时代中国特色社会主义思想确立为党必须长期坚持的指导思想并写入党章。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">2. "十个明确"是习近平新时代中国特色社会主义思想的基本内容，集中体现了这一思想体系的主要观点。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。"十个明确"是习近平新时代中国特色社会主义思想的主体内容，构成了这一思想体系的四梁八柱。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">3. 中国特色社会主义最本质的特征是人民民主专政。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,false)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,true)">错</div>
+    </div>
+    <div class="tf-ans">✅ 错。中国特色社会主义最本质的特征是中国共产党领导，这是习近平总书记提出的重要论断。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">4. 新发展理念是指创新、协调、绿色、开放、共享。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。新发展理念是习近平经济思想的核心内容，是管全局、管根本、管长远的导向。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">5. 共同富裕就是同步富裕、同等富裕。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,false)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,true)">错</div>
+    </div>
+    <div class="tf-ans">✅ 错。共同富裕不是同步富裕、同等富裕，而是分阶段促进共同富裕，允许一部分人先富起来。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">6. 公文的主要受理机关称为主送机关，应当使用机关全称或者规范化简称。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。主送机关是公文的主要受理机关，应当使用机关全称、规范化简称或者同类型机关统称。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">7. 请示和报告都是上行文，都需要上级机关批复。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,false)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,true)">错</div>
+    </div>
+    <div class="tf-ans">✅ 错。请示需要上级批复，报告不需要批复；请示事前行文，报告事中或事后行文。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">8. 函适用于不相隶属机关之间商洽工作、询问和答复问题，是平行文。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。函适用于不相隶属机关之间商洽工作、询问和答复问题、请求批准和答复审批事项。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">9. 公文格式包括版头、主体、版记三部分，一般使用A3纸印刷。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,false)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,true)">错</div>
+    </div>
+    <div class="tf-ans">✅ 错。公文格式包括版头、主体、版记三部分，一般使用A4纸，左侧装订。</div>
+  </div>
+  <div class="tf-item">
+    <div class="tf-q">10. 2012年新《条例》将公文种类调整为15种，取消了"条例"和"规定"。</div>
+    <div class="tf-opts">
+      <div class="tf-opt" onclick="answerTF(this,true)">对</div>
+      <div class="tf-opt" onclick="answerTF(this,false)">错</div>
+    </div>
+    <div class="tf-ans">✅ 对。2012年7月1日起施行的《党政机关公文处理工作条例》将公文种类调整为15种。</div>
+  </div>
+</div>
+
+</div><!-- end .content -->
+
+<!-- 打卡底部栏 -->
+<div class="checkin-bar" id="checkinBar">
+  <button class="checkin-btn" id="checkinBtn" onclick="doCheckin()">今日打卡</button>
+</div>
+
+<!-- 打卡成功弹窗 -->
+<div class="checkin-popup" id="checkinPopup">
+  <div class="checkin-card">
+    <div class="emoji">🎉</div>
+    <div class="text" id="checkinText">打卡成功！</div>
+    <div class="sub" id="checkinSub">继续加油！</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // 吉祥话
+  var fortunes = ['心有山海，静而不争', '日拱一卒，功不唐捐', '星光不问赶路人，时光不负有心人', '每一天的坚持，都是未来的伏笔', '不积跬步，无以至千里', '学而不思则罔，思而不学则殆', '凡是过去，皆为序章', '长风破浪会有时，直挂云帆济沧海', '博观而约取，厚积而薄发', '路漫漫其修远兮，吾将上下而求索', '知行合一，止于至善'];
+
+  // 总览背景渐变数组（每次随机选一款，纯CSS零加载）
+  var overviewGradients = [
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+    'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+    'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+  ];
+
+  // 刷新总览面板（恢复打卡状态 + 吉祥话 + 背景渐变）
+  function refreshOverview() {
+    // 1. 恢复背景渐变（只在还没有背景时随机选，避免每次切换都变）
+    var bgEl = document.getElementById('overviewBg');
+    if(bgEl && !bgEl.style.background) {
+      var bgIdx = Math.floor(Math.random() * overviewGradients.length);
+      bgEl.style.background = overviewGradients[bgIdx];
+    }
+    // 2. 根据打卡状态恢复吉祥话
+    for(var d = 1; d <= 7; d++) {
+      var btn = document.getElementById('checkinBtn' + d);
+      var titleEl = document.getElementById('fortuneTitle' + d);
+    }
+    // 3. 更新总览打卡状态
+    updateOverviewStatus();
+  }
+
+  // 切换视图
+  function switchView(day) {
+    var ov = document.getElementById('overviewPanel');
+    var views = [];
+    for(var i = 1; i <= 7; i++) views.push(document.getElementById('dayView' + i));
+    var tabs = document.querySelectorAll('.day-tab');
+
+    // 更新标签样式
+    tabs.forEach(function(t,idx){ t.classList.toggle('active', idx === day); });
+
+    if(day === 0) {
+      refreshOverview();
+      ov.style.display = 'block';
+      setTimeout(function(){ ov.classList.add('active'); }, 10);
+      views.forEach(function(v){ if(v) { v.style.display = 'none'; } });
+    } else {
+      ov.classList.remove('active');
+      ov.style.display = 'none';
+      views.forEach(function(v){ if(v) { v.style.display = 'none'; } });
+      var target = document.getElementById('dayView' + day);
+      if(target) {
+        target.style.display = 'block';
+        setTimeout(function(){ target.style.animation = 'fadeInUp .38s cubic-bezier(.22,1,.36,1) both'; }, 10);
+      }
+    }
+  }
+
+  // 跳转到指定天
+  window.goToDay = function(day) {
+    switchView(day);
+  };
+
+  // 更新总览打卡状态
+  function updateOverviewStatus() {
+    for(var d = 1; d <= 7; d++) {
+      var checked = localStorage.getItem('gj_checkin_w3_d' + d);
+      var ovDay = document.getElementById('ov_day_' + d);
+      var ovStatus = document.getElementById('ov_status_' + d);
+      if(checked) {
+        ovDay.classList.add('checked');
+        ovStatus.textContent = '已打卡';
+        ovStatus.className = 'ov-status done';
+      } else {
+        ovDay.classList.remove('checked');
+        ovStatus.textContent = '未打卡';
+        ovStatus.className = 'ov-status';
+      }
+    }
+  }
+
+  // 打卡
+  window.doCheckin = function() {
+    var today = new Date();
+    var dayOfWeek = today.getDay(); // 0=周日, 1=周一...
+    var day = dayOfWeek === 0 ? 7 : dayOfWeek;
+
+    var already = localStorage.getItem('gj_checkin_w3_d' + day);
+    if(already) {
+      // 取消打卡
+      localStorage.removeItem('gj_checkin_w3_d' + day);
+      localStorage.removeItem('gj_fortune_w3_d' + day);
+      document.getElementById('checkinBtn').textContent = '今日打卡';
+      document.getElementById('checkinBtn').classList.remove('checked');
+    } else {
+      // 执行打卡
+      var now = new Date();
+      localStorage.setItem('gj_checkin_w3_d' + day, '1');
+      localStorage.setItem('gj_checkin_time_w3_d' + day, now.toISOString());
+      var fi = Math.floor(Math.random() * fortunes.length);
+      localStorage.setItem('gj_fortune_w3_d' + day, fortunes[fi]);
+
+      document.getElementById('checkinBtn').textContent = '今日已打卡 ✓';
+      document.getElementById('checkinBtn').classList.add('checked');
+
+      // 显示打卡弹窗
+      var popup = document.getElementById('checkinPopup');
+      document.getElementById('checkinText').textContent = fortunes[fi];
+      popup.classList.add('show');
+      setTimeout(function(){ popup.classList.remove('show'); }, 1800);
+    }
+    updateOverviewStatus();
+    saveCheckinsToLocal();
+  };
+
+  // 保存打卡数据到 localStorage（供目录页读取）
+  function saveCheckinsToLocal() {
+    var data = {};
+    for(var d = 1; d <= 7; d++) {
+      if(localStorage.getItem('gj_checkin_w3_d' + d)) {
+        data['d' + d] = {
+          time: localStorage.getItem('gj_checkin_time_w3_d' + d),
+          fortune: localStorage.getItem('gj_fortune_w3_d' + d)
+        };
+      }
+    }
+    localStorage.setItem('gj_checkin_w3', JSON.stringify(data));
+  }
+
+  // 从 localStorage 恢复打卡状态（页面加载时调用）
+  function loadCheckinsFromLocal() {
+    // 恢复打卡按钮状态
+    var today = new Date();
+    var dayOfWeek = today.getDay();
+    var day = dayOfWeek === 0 ? 7 : dayOfWeek;
+    var already = localStorage.getItem('gj_checkin_w3_d' + day);
+    if(already) {
+      document.getElementById('checkinBtn').textContent = '今日已打卡 ✓';
+      document.getElementById('checkinBtn').classList.add('checked');
+    }
+    // 恢复总览面板
+    refreshOverview();
+  }
+
+  // 自测题判分
+  window.answerQuiz = function(el, idx) {
+    var item = el.closest('.quiz-item');
+    var ans = item.querySelector('.quiz-ans');
+    var opts = item.querySelectorAll('.quiz-opt');
+    opts.forEach(function(o){ o.style.pointerEvents = 'none'; });
+    if(el.dataset.ans == idx) {
+      el.classList.add('correct');
+    } else {
+      el.classList.add('wrong');
+      // 显示正确答案
+      opts.forEach(function(o){
+        if(o.dataset.ans == o.textContent.slice(0,1)) o.classList.add('correct');
+      });
+    }
+    ans.classList.add('show');
+  };
+
+  // 判断题判分
+  window.answerTF = function(el, isCorrect) {
+    var item = el.closest('.tf-item');
+    var ans = item.querySelector('.tf-ans');
+    var opts = item.querySelectorAll('.tf-opt');
+    opts.forEach(function(o){ o.style.pointerEvents = 'none'; });
+    var correct = item.querySelector('.tf-q').textContent.includes('✅') ? true : false;
+    // 简化处理：点击"对"对应true，点击"错"对应false
+    opts.forEach(function(o){
+      var val = o.textContent.trim() === '对';
+      if(val === isCorrect) o.classList.add('correct');
+      else o.classList.add('wrong');
+    });
+    ans.classList.add('show');
+  };
+
+  // 页面加载时初始化
+  document.addEventListener('DOMContentLoaded', function(){
+    loadCheckinsFromLocal();
+  });
+})();
+</script>
+</body>
+</html>
